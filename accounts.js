@@ -1,29 +1,29 @@
 /**
 
-@module Ethereum:accounts
+@module Happyuc:accounts
 */
 
 /**
-The accounts collection, with some ethereum additions.
+The accounts collection, with some happyuc additions.
 
-@class EthAccounts
+@class HucAccounts
 @constructor
 */
-var collection = new Mongo.Collection("ethereum_accounts", {
+var collection = new Mongo.Collection("happyuc_accounts", {
   connection: null
 });
-EthAccounts = _.clone(collection);
-EthAccounts._collection = collection;
+HucAccounts = _.clone(collection);
+HucAccounts._collection = collection;
 
 if (typeof PersistentMinimongo !== "undefined")
-  new PersistentMinimongo(EthAccounts._collection);
+  new PersistentMinimongo(HucAccounts._collection);
 
 /**
 Updates the accounts balances, by watching for new blocks and checking the balance.
 
 @method _watchBalance
 */
-EthAccounts._watchBalance = function() {
+HucAccounts._watchBalance = function() {
   var _this = this;
 
   if (this.blockSubscription) {
@@ -31,7 +31,7 @@ EthAccounts._watchBalance = function() {
   }
 
   // UPDATE SIMPLE ACCOUNTS balance on each new block
-  this.blockSubscription = web3.eth
+  this.blockSubscription = webu.huc
     .subscribe("newBlockHeaders")
     .on("data", function() {
       _this._updateBalance();
@@ -43,17 +43,17 @@ Updates the accounts balances.
 
 @method _updateBalance
 */
-EthAccounts._updateBalance = function() {
+HucAccounts._updateBalance = function() {
   var _this = this;
 
-  _.each(EthAccounts.find({}).fetch(), function(account) {
-    web3.eth.getBalance(account.address, function(err, res) {
+  _.each(HucAccounts.find({}).fetch(), function(account) {
+    webu.huc.getBalance(account.address, function(err, res) {
       if (!err) {
         if (res.toFixed) {
           res = res.toFixed();
         }
 
-        EthAccounts.update(account._id, {
+        HucAccounts.update(account._id, {
           $set: {
             balance: res
           }
@@ -69,13 +69,13 @@ if its finds a difference between the accounts in the collection and the account
 
 @method _addAccounts
 */
-EthAccounts._addAccounts = function() {
+HucAccounts._addAccounts = function() {
   var _this = this;
 
   // UPDATE normal accounts on start
-  web3.eth.getAccounts(function(e, accounts) {
+  webu.huc.getAccounts(function(e, accounts) {
     if (!e) {
-      var visibleAccounts = _.pluck(EthAccounts.find().fetch(), "address");
+      var visibleAccounts = _.pluck(HucAccounts.find().fetch(), "address");
 
       if (
         !_.isEmpty(accounts) &&
@@ -84,7 +84,7 @@ EthAccounts._addAccounts = function() {
       )
         return;
 
-      var localAccounts = EthAccounts.findAll().fetch();
+      var localAccounts = HucAccounts.findAll().fetch();
 
       // if the accounts are different, update the local ones
       _.each(localAccounts, function(account) {
@@ -93,13 +93,13 @@ EthAccounts._addAccounts = function() {
 
         // set status deactivated, if it seem to be gone
         if (!_.contains(accounts, account.address)) {
-          EthAccounts.updateAll(account._id, {
+          HucAccounts.updateAll(account._id, {
             $set: {
               deactivated: true
             }
           });
         } else {
-          EthAccounts.updateAll(account._id, {
+          HucAccounts.updateAll(account._id, {
             $unset: {
               deactivated: ""
             }
@@ -112,19 +112,19 @@ EthAccounts._addAccounts = function() {
       // ADD missing accounts
       var accountsCount = visibleAccounts.length + 1;
       _.each(accounts, function(address) {
-        web3.eth.getBalance(address, function(e, balance) {
+        webu.huc.getBalance(address, function(e, balance) {
           if (!e) {
             if (balance.toFixed) {
               balance = balance.toFixed();
             }
 
-            web3.eth.getCoinbase(function(error, coinbase) {
+            webu.huc.getCoinbase(function(error, coinbase) {
               if (error) {
                 console.warn("getCoinbase error: ", error);
                 coinbase = null; // continue with null coinbase
               }
 
-              var doc = EthAccounts.findAll({
+              var doc = HucAccounts.findAll({
                 address: address
               }).fetch()[0];
 
@@ -134,16 +134,16 @@ EthAccounts._addAccounts = function() {
                 balance: balance,
                 name:
                   address === coinbase
-                    ? "Main account (Etherbase)"
+                    ? "Main account (Hucerbase)"
                     : "Account " + accountsCount
               };
 
               if (doc) {
-                EthAccounts.updateAll(doc._id, {
+                HucAccounts.updateAll(doc._id, {
                   $set: insert
                 });
               } else {
-                EthAccounts.insert(insert);
+                HucAccounts.insert(insert);
               }
 
               if (address !== coinbase) accountsCount++;
@@ -164,7 +164,7 @@ Builds the query with the addition of "{deactivated: {$exists: false}}"
 @param {Object} options.includeDeactivated If set then de-activated accounts are also included.
 @return {Object} The query
 */
-EthAccounts._addToQuery = function(args, options) {
+HucAccounts._addToQuery = function(args, options) {
   var _this = this;
 
   options = _.extend(
@@ -199,7 +199,7 @@ Find all accounts, besides the deactivated ones
 @method find
 @return {Object} cursor
 */
-EthAccounts.find = function() {
+HucAccounts.find = function() {
   return this._collection.find.apply(this, this._addToQuery(arguments));
 };
 
@@ -209,7 +209,7 @@ Find all accounts, including the deactivated ones
 @method findAll
 @return {Object} cursor
 */
-EthAccounts.findAll = function() {
+HucAccounts.findAll = function() {
   return this._collection.find.apply(
     this,
     this._addToQuery(arguments, {
@@ -224,7 +224,7 @@ Find one accounts, besides the deactivated ones
 @method findOne
 @return {Object} cursor
 */
-EthAccounts.findOne = function() {
+HucAccounts.findOne = function() {
   return this._collection.findOne.apply(this, this._addToQuery(arguments));
 };
 
@@ -234,7 +234,7 @@ Update accounts, besides the deactivated ones
 @method update
 @return {Object} cursor
 */
-EthAccounts.update = function() {
+HucAccounts.update = function() {
   return this._collection.update.apply(this, this._addToQuery(arguments));
 };
 
@@ -244,7 +244,7 @@ Update accounts, including the deactivated ones
 @method updateAll
 @return {Object} cursor
 */
-EthAccounts.updateAll = function() {
+HucAccounts.updateAll = function() {
   return this._collection.update.apply(
     this,
     this._addToQuery(arguments, {
@@ -259,7 +259,7 @@ Update accounts, including the deactivated ones
 @method upsert
 @return {Object} cursor
 */
-EthAccounts.upsert = function() {
+HucAccounts.upsert = function() {
   return this._collection.upsert.apply(
     this,
     this._addToQuery(arguments, {
@@ -273,12 +273,12 @@ Starts fetching and watching the accounts
 
 @method init
 */
-EthAccounts.init = function() {
+HucAccounts.init = function() {
   var _this = this;
 
-  if (typeof web3 === "undefined") {
+  if (typeof webu === "undefined") {
     console.warn(
-      "EthAccounts couldn't find web3, please make sure to instantiate a web3 object before calling EthAccounts.init()"
+      "HucAccounts couldn't find webu, please make sure to instantiate a webu object before calling HucAccounts.init()"
     );
     return;
   }

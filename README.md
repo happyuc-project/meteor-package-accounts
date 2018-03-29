@@ -1,15 +1,15 @@
-# Ethereum accounts
+# Happyuc accounts
 
-Provides you with an `EthAccounts` collection, where balances are automatically updated.
+Provides you with an `HucAccounts` collection, where balances are automatically updated.
 Additionally the accounts are persisted in localstorage.
 
 If the ethereum node removes accounts,
-the `EthAccounts` collection will set the `deactivated: true` property to these accounts and hide them from normal queries.
+the `HucAccounts` collection will set the `deactivated: true` property to these accounts and hide them from normal queries.
 
 If the Accounts should reapear in the node (e.g. the user importet those, or mist allwed them access), they will be available again,
 including all the extra properties you've set.
 
-**Note** don't use the `EthAccounts` collection to add your own custom accounts as a reload of your application,
+**Note** don't use the `HucAccounts` collection to add your own custom accounts as a reload of your application,
 or any change in `web3.eth.accounts` would hide them.
 
 ## Installation
@@ -24,7 +24,7 @@ Initialize Accounts on the start of your application, as soon as you have a ethe
 EthAccounts.init();
 ```
 
-Then simply use the global `EthAccounts` object like any other minimongo collection.
+Then simply use the global `HucAccounts` object like any other minimongo collection.
 It provides the `.find()`, `.findOne()`, `.findAll()`, `.update()`, `.updateAll()` and `.remove()` functions e.g.:
 
 ```js
