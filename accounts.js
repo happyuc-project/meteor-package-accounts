@@ -1,48 +1,49 @@
 /**
 
-@module Happyuc:accounts
-*/
+ @module Happyuc:accounts
+ */
 
 /**
-The accounts collection, with some happyuc additions.
+ The accounts collection, with some happyuc additions.
 
-@class HucAccounts
-@constructor
-*/
-var collection = new Mongo.Collection("happyuc_accounts", {
-  connection: null
+ @class HucAccounts
+ @constructor
+ */
+var collection = new Mongo.Collection('happyuc_accounts', {
+  connection: null,
 });
 HucAccounts = _.clone(collection);
 HucAccounts._collection = collection;
 
-if (typeof PersistentMinimongo !== "undefined")
+if (typeof PersistentMinimongo !== 'undefined')
   new PersistentMinimongo(HucAccounts._collection);
 
 /**
-Updates the accounts balances, by watching for new blocks and checking the balance.
+ Updates the accounts balances, by watching for new blocks and checking the balance.
 
-@method _watchBalance
-*/
+ @method _watchBalance
+ */
 HucAccounts._watchBalance = function() {
   var _this = this;
 
   if (this.blockSubscription) {
-    this.blockSubscription.unsubscribe();
+    this.blockSubscription.stopWatching();
   }
 
   // UPDATE SIMPLE ACCOUNTS balance on each new block
-  this.blockSubscription = webu.huc
-    .subscribe("newBlockHeaders")
-    .on("data", function() {
+  this.blockSubscription = webu.huc.filter('latest');
+  this.blockSubscription.watch(function(e, res){
+    if(!e) {
       _this._updateBalance();
-    });
+    }
+  });
 };
 
 /**
-Updates the accounts balances.
+ Updates the accounts balances.
 
-@method _updateBalance
-*/
+ @method _updateBalance
+ */
 HucAccounts._updateBalance = function() {
   var _this = this;
 
@@ -55,8 +56,8 @@ HucAccounts._updateBalance = function() {
 
         HucAccounts.update(account._id, {
           $set: {
-            balance: res
-          }
+            balance: res,
+          },
         });
       }
     });
@@ -64,23 +65,23 @@ HucAccounts._updateBalance = function() {
 };
 
 /**
-Updates the accounts list,
-if its finds a difference between the accounts in the collection and the accounts in the accounts array.
+ Updates the accounts list,
+ if its finds a difference between the accounts in the collection and the accounts in the accounts array.
 
-@method _addAccounts
-*/
+ @method _addAccounts
+ */
 HucAccounts._addAccounts = function() {
   var _this = this;
 
   // UPDATE normal accounts on start
   webu.huc.getAccounts(function(e, accounts) {
     if (!e) {
-      var visibleAccounts = _.pluck(HucAccounts.find().fetch(), "address");
+      var visibleAccounts = _.pluck(HucAccounts.find().fetch(), 'address');
 
       if (
-        !_.isEmpty(accounts) &&
-        _.difference(accounts, visibleAccounts).length === 0 &&
-        _.difference(visibleAccounts, accounts).length === 0
+          !_.isEmpty(accounts) &&
+          _.difference(accounts, visibleAccounts).length === 0 &&
+          _.difference(visibleAccounts, accounts).length === 0
       )
         return;
 
@@ -95,14 +96,14 @@ HucAccounts._addAccounts = function() {
         if (!_.contains(accounts, account.address)) {
           HucAccounts.updateAll(account._id, {
             $set: {
-              deactivated: true
-            }
+              deactivated: true,
+            },
           });
         } else {
           HucAccounts.updateAll(account._id, {
             $unset: {
-              deactivated: ""
-            }
+              deactivated: '',
+            },
           });
         }
 
@@ -120,27 +121,27 @@ HucAccounts._addAccounts = function() {
 
             webu.huc.getCoinbase(function(error, coinbase) {
               if (error) {
-                console.warn("getCoinbase error: ", error);
+                console.warn('getCoinbase error: ', error);
                 coinbase = null; // continue with null coinbase
               }
 
               var doc = HucAccounts.findAll({
-                address: address
+                address: address,
               }).fetch()[0];
 
               var insert = {
-                type: "account",
+                type: 'account',
                 address: address,
                 balance: balance,
                 name:
-                  address === coinbase
-                    ? "Main account (Hucerbase)"
-                    : "Account " + accountsCount
+                    address === coinbase
+                        ? 'Main account (Hucerbase)'
+                        : 'Account ' + accountsCount,
               };
 
               if (doc) {
                 HucAccounts.updateAll(doc._id, {
-                  $set: insert
+                  $set: insert,
                 });
               } else {
                 HucAccounts.insert(insert);
@@ -156,29 +157,29 @@ HucAccounts._addAccounts = function() {
 };
 
 /**
-Builds the query with the addition of "{deactivated: {$exists: false}}"
+ Builds the query with the addition of "{deactivated: {$exists: false}}"
 
-@method _addToQuery
-@param {Mixed} arg
-@param {Object} options
-@param {Object} options.includeDeactivated If set then de-activated accounts are also included.
-@return {Object} The query
-*/
+ @method _addToQuery
+ @param {Mixed} arg
+ @param {Object} options
+ @param {Object} options.includeDeactivated If set then de-activated accounts are also included.
+ @return {Object} The query
+ */
 HucAccounts._addToQuery = function(args, options) {
   var _this = this;
 
   options = _.extend(
-    {
-      includeDeactivated: false
-    },
-    options
+      {
+        includeDeactivated: false,
+      },
+      options,
   );
 
   var args = Array.prototype.slice.call(args);
 
   if (_.isString(args[0])) {
     args[0] = {
-      _id: args[0]
+      _id: args[0],
     };
   } else if (!_.isObject(args[0])) {
     args[0] = {};
@@ -186,7 +187,7 @@ HucAccounts._addToQuery = function(args, options) {
 
   if (!options.includeDeactivated) {
     args[0] = _.extend(args[0], {
-      deactivated: { $exists: false }
+      deactivated: {$exists: false},
     });
   }
 
@@ -194,91 +195,91 @@ HucAccounts._addToQuery = function(args, options) {
 };
 
 /**
-Find all accounts, besides the deactivated ones
+ Find all accounts, besides the deactivated ones
 
-@method find
-@return {Object} cursor
-*/
+ @method find
+ @return {Object} cursor
+ */
 HucAccounts.find = function() {
   return this._collection.find.apply(this, this._addToQuery(arguments));
 };
 
 /**
-Find all accounts, including the deactivated ones
+ Find all accounts, including the deactivated ones
 
-@method findAll
-@return {Object} cursor
-*/
+ @method findAll
+ @return {Object} cursor
+ */
 HucAccounts.findAll = function() {
   return this._collection.find.apply(
-    this,
-    this._addToQuery(arguments, {
-      includeDeactivated: true
-    })
+      this,
+      this._addToQuery(arguments, {
+        includeDeactivated: true,
+      }),
   );
 };
 
 /**
-Find one accounts, besides the deactivated ones
+ Find one accounts, besides the deactivated ones
 
-@method findOne
-@return {Object} cursor
-*/
+ @method findOne
+ @return {Object} cursor
+ */
 HucAccounts.findOne = function() {
   return this._collection.findOne.apply(this, this._addToQuery(arguments));
 };
 
 /**
-Update accounts, besides the deactivated ones
+ Update accounts, besides the deactivated ones
 
-@method update
-@return {Object} cursor
-*/
+ @method update
+ @return {Object} cursor
+ */
 HucAccounts.update = function() {
   return this._collection.update.apply(this, this._addToQuery(arguments));
 };
 
 /**
-Update accounts, including the deactivated ones
+ Update accounts, including the deactivated ones
 
-@method updateAll
-@return {Object} cursor
-*/
+ @method updateAll
+ @return {Object} cursor
+ */
 HucAccounts.updateAll = function() {
   return this._collection.update.apply(
-    this,
-    this._addToQuery(arguments, {
-      includeDeactivated: true
-    })
+      this,
+      this._addToQuery(arguments, {
+        includeDeactivated: true,
+      }),
   );
 };
 
 /**
-Update accounts, including the deactivated ones
+ Update accounts, including the deactivated ones
 
-@method upsert
-@return {Object} cursor
-*/
+ @method upsert
+ @return {Object} cursor
+ */
 HucAccounts.upsert = function() {
   return this._collection.upsert.apply(
-    this,
-    this._addToQuery(arguments, {
-      includeDeactivated: true
-    })
+      this,
+      this._addToQuery(arguments, {
+        includeDeactivated: true,
+      }),
   );
 };
 
 /**
-Starts fetching and watching the accounts
+ Starts fetching and watching the accounts
 
-@method init
-*/
+ @method init
+ */
 HucAccounts.init = function() {
   var _this = this;
 
-  if (typeof webu === "undefined") {
+  if (typeof webu === 'undefined') {
     console.warn(
-      "HucAccounts couldn't find webu, please make sure to instantiate a webu object before calling HucAccounts.init()"
+        'HucAccounts couldn\'t find webu, please make sure to instantiate a webu object before calling HucAccounts.init()',
     );
     return;
   }
