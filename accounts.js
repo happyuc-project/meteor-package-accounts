@@ -9,14 +9,11 @@
  @class HucAccounts
  @constructor
  */
-var collection = new Mongo.Collection('happyuc_accounts', {
-  connection: null,
-});
+var collection = new Mongo.Collection('happyuc_accounts', {connection: null});
 HucAccounts = _.clone(collection);
 HucAccounts._collection = collection;
 
-if (typeof PersistentMinimongo !== 'undefined')
-  new PersistentMinimongo(HucAccounts._collection);
+if (typeof PersistentMinimongo !== 'undefined') new PersistentMinimongo(HucAccounts._collection);
 
 /**
  Updates the accounts balances, by watching for new blocks and checking the balance.
@@ -26,16 +23,12 @@ if (typeof PersistentMinimongo !== 'undefined')
 HucAccounts._watchBalance = function() {
   var _this = this;
 
-  if (this.blockSubscription) {
-    this.blockSubscription.stopWatching();
-  }
+  if (this.blockSubscription) this.blockSubscription.stopWatching();
 
   // UPDATE SIMPLE ACCOUNTS balance on each new block
   this.blockSubscription = webu.huc.filter('latest');
-  this.blockSubscription.watch(function(e, res){
-    if(!e) {
-      _this._updateBalance();
-    }
+  this.blockSubscription.watch(function(e, res) {
+    if (!e) _this._updateBalance();
   });
 };
 
@@ -50,15 +43,8 @@ HucAccounts._updateBalance = function() {
   _.each(HucAccounts.find({}).fetch(), function(account) {
     webu.huc.getBalance(account.address, function(err, res) {
       if (!err) {
-        if (res.toFixed) {
-          res = res.toFixed();
-        }
-
-        HucAccounts.update(account._id, {
-          $set: {
-            balance: res,
-          },
-        });
+        if (res.toFixed) res = res.toFixed();
+        HucAccounts.update(account._id, {$set: {balance: res}});
       }
     });
   });
@@ -82,8 +68,7 @@ HucAccounts._addAccounts = function() {
           !_.isEmpty(accounts) &&
           _.difference(accounts, visibleAccounts).length === 0 &&
           _.difference(visibleAccounts, accounts).length === 0
-      )
-        return;
+      ) return;
 
       var localAccounts = HucAccounts.findAll().fetch();
 
@@ -94,17 +79,10 @@ HucAccounts._addAccounts = function() {
 
         // set status deactivated, if it seem to be gone
         if (!_.contains(accounts, account.address)) {
-          HucAccounts.updateAll(account._id, {
-            $set: {
-              deactivated: true,
-            },
-          });
-        } else {
-          HucAccounts.updateAll(account._id, {
-            $unset: {
-              deactivated: '',
-            },
-          });
+          HucAccounts.updateAll(account._id, {$set: {deactivated: true}});
+        }
+        else {
+          HucAccounts.updateAll(account._id, {$unset: {deactivated: ''}});
         }
 
         accounts = _.without(accounts, account.address);
@@ -115,9 +93,7 @@ HucAccounts._addAccounts = function() {
       _.each(accounts, function(address) {
         webu.huc.getBalance(address, function(e, balance) {
           if (!e) {
-            if (balance.toFixed) {
-              balance = balance.toFixed();
-            }
+            if (balance.toFixed) balance = balance.toFixed();
 
             webu.huc.getCoinbase(function(error, coinbase) {
               if (error) {
@@ -125,24 +101,17 @@ HucAccounts._addAccounts = function() {
                 coinbase = null; // continue with null coinbase
               }
 
-              var doc = HucAccounts.findAll({
-                address: address,
-              }).fetch()[0];
+              var doc = HucAccounts.findAll({address: address}).fetch()[0];
 
               var insert = {
                 type: 'account',
                 address: address,
                 balance: balance,
-                name:
-                    address === coinbase
-                        ? 'Main account (Hucerbase)'
-                        : 'Account ' + accountsCount,
+                name: address === coinbase ? 'Main account (Hucerbase)' : 'Account ' + accountsCount,
               };
 
               if (doc) {
-                HucAccounts.updateAll(doc._id, {
-                  $set: insert,
-                });
+                HucAccounts.updateAll(doc._id, {$set: insert});
               } else {
                 HucAccounts.insert(insert);
               }
@@ -167,28 +136,18 @@ HucAccounts._addAccounts = function() {
  */
 HucAccounts._addToQuery = function(args, options) {
   var _this = this;
-
-  options = _.extend(
-      {
-        includeDeactivated: false,
-      },
-      options,
-  );
+  options = _.extend({includeDeactivated: false}, options);
 
   var args = Array.prototype.slice.call(args);
 
   if (_.isString(args[0])) {
-    args[0] = {
-      _id: args[0],
-    };
+    args[0] = {_id: args[0]};
   } else if (!_.isObject(args[0])) {
     args[0] = {};
   }
 
   if (!options.includeDeactivated) {
-    args[0] = _.extend(args[0], {
-      deactivated: {$exists: false},
-    });
+    args[0] = _.extend(args[0], {deactivated: {$exists: false}});
   }
 
   return args;
@@ -211,12 +170,7 @@ HucAccounts.find = function() {
  @return {Object} cursor
  */
 HucAccounts.findAll = function() {
-  return this._collection.find.apply(
-      this,
-      this._addToQuery(arguments, {
-        includeDeactivated: true,
-      }),
-  );
+  return this._collection.find.apply(this, this._addToQuery(arguments, {includeDeactivated: true}));
 };
 
 /**
@@ -246,12 +200,7 @@ HucAccounts.update = function() {
  @return {Object} cursor
  */
 HucAccounts.updateAll = function() {
-  return this._collection.update.apply(
-      this,
-      this._addToQuery(arguments, {
-        includeDeactivated: true,
-      }),
-  );
+  return this._collection.update.apply(this, this._addToQuery(arguments, {includeDeactivated: true}));
 };
 
 /**
@@ -261,12 +210,7 @@ HucAccounts.updateAll = function() {
  @return {Object} cursor
  */
 HucAccounts.upsert = function() {
-  return this._collection.upsert.apply(
-      this,
-      this._addToQuery(arguments, {
-        includeDeactivated: true,
-      }),
-  );
+  return this._collection.upsert.apply(this, this._addToQuery(arguments, {includeDeactivated: true}));
 };
 
 /**
@@ -278,9 +222,7 @@ HucAccounts.init = function() {
   var _this = this;
 
   if (typeof webu === 'undefined') {
-    console.warn(
-        'HucAccounts couldn\'t find webu, please make sure to instantiate a webu object before calling HucAccounts.init()',
-    );
+    console.warn('HucAccounts couldn\'t find webu, please make sure to instantiate a webu object before calling HucAccounts.init()');
     return;
   }
 

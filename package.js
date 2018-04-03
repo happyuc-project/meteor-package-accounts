@@ -2,7 +2,7 @@ Package.describe({
   name: "happyuc:accounts",
   summary:
     "Provides and updates the happyuc accounts in the Accounts collection",
-  version: "1.0.2",
+  version: "1.0.5",
   git: "http://github.com/happyuc-project/meteor-package-accounts"
 });
 
