@@ -20,8 +20,8 @@ ecmascript-runtime-server@0.5.0
 ejson@1.1.0
 frozeman:persistent-minimongo@0.1.8
 geojson-utils@1.0.10
-happyuc:accounts@1.0.6
-happyuc:webu@1.0.3
+happyuc:accounts@1.0.7
+happyuc:webu@1.0.5
 http@1.4.0
 id-map@1.1.0
 jquery@1.11.10
