@@ -129,7 +129,7 @@ HucAccounts._addAccounts = function() {
  Builds the query with the addition of "{deactivated: {$exists: false}}"
 
  @method _addToQuery
- @param {Mixed} arg
+ @param args
  @param {Object} options
  @param {Object} options.includeDeactivated If set then de-activated accounts are also included.
  @return {Object} The query
