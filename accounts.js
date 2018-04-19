@@ -107,7 +107,7 @@ HucAccounts._addAccounts = function() {
                 type: 'account',
                 address: address,
                 balance: balance,
-                name: address === coinbase ? 'Main account (Hucerbase)' : 'Account ' + accountsCount,
+                name: address === coinbase ? 'Main account (Coinbase)' : 'Account ' + accountsCount,
               };
 
               if (doc) {
