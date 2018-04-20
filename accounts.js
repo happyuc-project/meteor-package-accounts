@@ -27,9 +27,7 @@ HucAccounts._watchBalance = function() {
 
   // UPDATE SIMPLE ACCOUNTS balance on each new block
   this.blockSubscription = webu.huc.filter('latest');
-  this.blockSubscription.watch(function(e, res) {
-    if (!e) _this._updateBalance();
-  });
+  this.blockSubscription.watch(function(e, res) { if (!e) _this._updateBalance(); });
 };
 
 /**
@@ -80,8 +78,7 @@ HucAccounts._addAccounts = function() {
         // set status deactivated, if it seem to be gone
         if (!_.contains(accounts, account.address)) {
           HucAccounts.updateAll(account._id, {$set: {deactivated: true}});
-        }
-        else {
+        } else {
           HucAccounts.updateAll(account._id, {$unset: {deactivated: ''}});
         }
 
@@ -98,24 +95,19 @@ HucAccounts._addAccounts = function() {
             webu.huc.getCoinbase(function(error, coinbase) {
               if (error) {
                 console.warn('getCoinbase error: ', error);
-                coinbase = null; // continue with null coinbase
+                coinbase = null;
               }
 
               var doc = HucAccounts.findAll({address: address}).fetch()[0];
 
               var insert = {
-                type: 'account',
+                type   : 'account',
                 address: address,
                 balance: balance,
-                name: address === coinbase ? 'Main account (Coinbase)' : 'Account ' + accountsCount,
+                name   : address === coinbase ? 'Main account (Coinbase)' : 'Account ' + accountsCount,
               };
 
-              if (doc) {
-                HucAccounts.updateAll(doc._id, {$set: insert});
-              } else {
-                HucAccounts.insert(insert);
-              }
-
+              doc ? HucAccounts.updateAll(doc._id, {$set: insert}) : HucAccounts.insert(insert);
               if (address !== coinbase) accountsCount++;
             });
           }
@@ -130,7 +122,7 @@ HucAccounts._addAccounts = function() {
 
  @method _addToQuery
  @param args
- @param {Object} options
+ @param {IArguments} options
  @param {Object} options.includeDeactivated If set then de-activated accounts are also included.
  @return {Object} The query
  */
@@ -138,7 +130,7 @@ HucAccounts._addToQuery = function(args, options) {
   var _this = this;
   options = _.extend({includeDeactivated: false}, options);
 
-  var args = Array.prototype.slice.call(args);
+  args = Array.prototype.slice.call(args);
 
   if (_.isString(args[0])) {
     args[0] = {_id: args[0]};
@@ -146,9 +138,7 @@ HucAccounts._addToQuery = function(args, options) {
     args[0] = {};
   }
 
-  if (!options.includeDeactivated) {
-    args[0] = _.extend(args[0], {deactivated: {$exists: false}});
-  }
+  if (!options.includeDeactivated) args[0] = _.extend(args[0], {deactivated: {$exists: false}});
 
   return args;
 };
@@ -228,14 +218,11 @@ HucAccounts.init = function() {
 
   Tracker.nonreactive(function() {
     _this._addAccounts();
-
     _this._updateBalance();
     _this._watchBalance();
 
     // check for new accounts every 2s
     Meteor.clearInterval(_this._intervalId);
-    _this._intervalId = Meteor.setInterval(function() {
-      _this._addAccounts();
-    }, 2000);
+    _this._intervalId = Meteor.setInterval(function() { _this._addAccounts(); }, 2000);
   });
 };

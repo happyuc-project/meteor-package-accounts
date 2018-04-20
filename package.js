@@ -1,8 +1,8 @@
 Package.describe({
-  name: 'happyuc:accounts',
+  name   : 'happyuc:accounts',
   summary: 'Provides and updates the happyuc accounts in the Accounts collection',
-  version: '1.1.1',
-  git: 'http://github.com/happyuc-project/meteor-package-accounts',
+  version: '1.1.3',
+  git    : 'http://github.com/happyuc-project/meteor-package-accounts',
 });
 
 Package.onUse(function(api) {
@@ -17,8 +17,3 @@ Package.onUse(function(api) {
   api.addFiles('accounts.js', ['client', 'server']);
 });
 
-// Package.onTest(function(api) {
-//   api.use('tinytest');
-//   api.use('happyuc:accounts');
-//   api.addFiles('accounts-tests.js');
-// });
